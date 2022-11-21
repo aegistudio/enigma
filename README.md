@@ -21,5 +21,5 @@ in the destinattion path. So you must pay extra attention when working
 with rename-based application, such as log rotation system and data
 base systems.
 
-The file name and data will be encrypted in CTR block mode, which
-supports random accessing each files.
+The file name and data will be encrypted in AES-256-CTR block mode,
+which supports random accessing each files.
