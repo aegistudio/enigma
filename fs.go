@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -355,14 +354,6 @@ func (efs *Fs) evaluateCacheValue(path string) *cacheValue {
 	return result
 }
 
-// cleanPath jails and cleanup the user specified path.
-func cleanPath(p string) string {
-	p = p[len(filepath.VolumeName(p)):]
-	p = filepath.ToSlash(p)
-	p = path.Clean(path.Join("/", p))
-	return filepath.FromSlash(p)
-}
-
 // evaluateCleanPath evaluate the ptah relative to the
 // inner file system. This comes handy for those don't
 // need the cache value.
@@ -372,7 +363,7 @@ func (efs *Fs) evaluateCleanPath(cleanPath string) string {
 }
 
 func (efs *Fs) Mkdir(name string, perm os.FileMode) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	if !efs.readWrite {
 		return pathError("mkdir", name, syscall.EROFS)
 	}
@@ -381,7 +372,7 @@ func (efs *Fs) Mkdir(name string, perm os.FileMode) error {
 }
 
 func (efs *Fs) MkdirAll(name string, perm os.FileMode) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	if !efs.readWrite {
 		return pathError("mkdir", name, syscall.EROFS)
 	}
@@ -400,7 +391,7 @@ func (efs *Fs) statCleanPath(name string) (os.FileInfo, error) {
 }
 
 func (efs *Fs) Stat(name string) (os.FileInfo, error) {
-	return efs.statCleanPath(cleanPath(name))
+	return efs.statCleanPath(CleanPath(name))
 }
 
 func (*Fs) Name() string {
@@ -408,7 +399,7 @@ func (*Fs) Name() string {
 }
 
 func (efs *Fs) Chmod(name string, mode os.FileMode) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	if !efs.readWrite {
 		return pathError("chmod", name, syscall.EROFS)
 	}
@@ -417,7 +408,7 @@ func (efs *Fs) Chmod(name string, mode os.FileMode) error {
 }
 
 func (efs *Fs) Chown(name string, uid, gid int) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	if !efs.readWrite {
 		return pathError("chown", name, syscall.EROFS)
 	}
@@ -426,7 +417,7 @@ func (efs *Fs) Chown(name string, uid, gid int) error {
 }
 
 func (efs *Fs) Chtimes(name string, atime, mtime time.Time) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	if !efs.readWrite {
 		return pathError("chtimes", name, syscall.EROFS)
 	}
@@ -462,7 +453,7 @@ func (efs *Fs) removeDir(name string) error {
 }
 
 func (efs *Fs) RemoveAll(name string) error {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	info, err := efs.statCleanPath(name)
 	if err != nil {
 		return err
@@ -557,8 +548,8 @@ func underCleanPath(a, b string) (bool, bool) {
 }
 
 func (efs *Fs) Merge(src, dst string) error {
-	src = cleanPath(src)
-	dst = cleanPath(dst)
+	src = CleanPath(src)
+	dst = CleanPath(dst)
 	srcUnderDst, dstUnderSrc := underCleanPath(src, dst)
 	if !srcUnderDst && dstUnderSrc {
 		return pathError(src, "rename", syscall.EINVAL)
@@ -595,8 +586,8 @@ func (efs *Fs) Merge(src, dst string) error {
 }
 
 func (efs *Fs) Rename(src, dst string) error {
-	src = cleanPath(src)
-	dst = cleanPath(dst)
+	src = CleanPath(src)
+	dst = CleanPath(dst)
 	srcUnderDst, dstUnderSrc := underCleanPath(src, dst)
 	if !srcUnderDst && dstUnderSrc {
 		return pathError(src, "rename", syscall.EINVAL)

@@ -10,6 +10,7 @@ require (
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
+	github.com/winfsp/cgofuse v1.5.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/protobuf v1.28.1
 )

@@ -754,7 +754,7 @@ func convertFileMode(mode os.FileMode) fileMode {
 func (efs *Fs) OpenFile(
 	name string, flag int, perm os.FileMode,
 ) (afero.File, error) {
-	name = cleanPath(name)
+	name = CleanPath(name)
 	value := efs.evaluateCacheValue(name)
 	nonce := value.nonce
 	realPath := filepath.Join(efs.prefix, value.prefix)
@@ -900,7 +900,7 @@ func (efs *Fs) Remove(name string) error {
 	if !efs.readWrite {
 		return pathError("remove", name, syscall.EROFS)
 	}
-	name = cleanPath(name)
+	name = CleanPath(name)
 	value := efs.evaluateCacheValue(name)
 	nonce := value.nonce
 	realPath := filepath.Join(efs.prefix, value.prefix)

@@ -17,6 +17,8 @@ package enigma
 
 import (
 	"io/fs"
+	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -41,4 +43,16 @@ func pathError(op, name string, err error) error {
 		Path: name,
 		Err:  err,
 	}
+}
+
+// CleanPath jails and cleanup the user specified path.
+//
+// This function is used for obtaining a file path that is
+// unique in the file system and the same as the one reported
+// by the file system.
+func CleanPath(p string) string {
+	p = p[len(filepath.VolumeName(p)):]
+	p = filepath.ToSlash(p)
+	p = path.Clean(path.Join("/", p))
+	return filepath.FromSlash(p)
 }
