@@ -1,0 +1,59 @@
+name: hologram
+on: [push, pull_request]
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - GOOS: "linux"
+            GOARCH: "amd64"
+            name: "hologram-linux-amd64"
+          - GOOS: "linux"
+            GOARCH: "arm64"
+            name: "hologram-linux-aarch64"
+          - GOOS: "windows"
+            GOARCH: "amd64"
+            name: "hologram-windows-amd64.exe"
+          - GOOS: "windows"
+            GOARCH: "arm64"
+            name: "hologram-windows-aarch64.exe"
+          - GOOS: "darwin"
+            GOARCH: "amd64"
+            name: "hologram-macos-amd64"
+          - GOOS: "darwin"
+            GOARCH: "arm64"
+            name: "hologram-macos-aarch64"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
+      - run: |
+          mkdir -p build
+          GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} CGO_ENABLED=0 go build -ldflags '-extldflags="-static"' -tags osuergo,netgo -o build/${{ matrix.name }} ./cmd/hologram/
+          md5sum build/${{ matrix.name }} | tee build/${{ matrix.name }}.md5.txt
+          sha256sum build/${{ matrix.name }} | tee build/${{matrix.name }}.sha256.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: hologram
+          path: build/*/**
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: hologram
+          path: build/
+      - run: |
+          ls -la build
+          cat build/*.md5.txt
+          cat build/*.sha256.txt
+      - uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          draft: true
+          files: build/*
