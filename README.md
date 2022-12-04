@@ -1,13 +1,13 @@
-# Hologram: a simple encrypted filesystem
+# Enigma: a simple encrypted filesystem
 
-Hologram is a simple encrypted filesystem that adds a thin layer
-of encryption over native filesystem and keeps your most sensitive
+Enigma is a simple encrypted filesystem that adds a thin layer of
+encryption over native filesystem and keeps your most sensitive
 secrets.
 
 ## Roadmap
 
 * Operation Mode
-  * [x] Hologram mode
+  * [x] Direct mapping mode
   * [ ] POSIX-compatible mode
 * Key Specification
   * [x] File (prone to invasion) [^1]

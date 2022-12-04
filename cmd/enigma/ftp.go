@@ -9,20 +9,20 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/aegistudio/hologram"
+	"github.com/aegistudio/enigma"
 )
 
 var (
 	ftpSettings = &ftp.Settings{
 		ListenAddr:              ":2121",
 		ActiveTransferPortNon20: true,
-		Banner:                  "hologram",
+		Banner:                  "enigma",
 	}
 	ftpReadOnly = false
 )
 
 type ftpMainDriver struct {
-	hfs *hologram.Fs
+	hfs *enigma.Fs
 }
 
 func (ftpMainDriver) GetSettings() (*ftp.Settings, error) {
@@ -48,7 +48,7 @@ func (d ftpMainDriver) AuthUser(
 
 var cmdFTP = &cobra.Command{
 	Use:   "ftp",
-	Short: "serve hologram file system via FTP server",
+	Short: "serve enigma file system via FTP server",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if !ftpReadOnly {
 			return serpent.AddOption(cmd, withReadWriteOption)
@@ -57,7 +57,7 @@ var cmdFTP = &cobra.Command{
 	},
 	RunE: serpent.Executor(shaft.Module(
 		shaft.Invoke(func(
-			rootCtx serpent.CommandContext, hfs *hologram.Fs,
+			rootCtx serpent.CommandContext, hfs *enigma.Fs,
 		) error {
 			group, ctx := errgroup.WithContext(rootCtx)
 			defer func() { _ = group.Wait() }()

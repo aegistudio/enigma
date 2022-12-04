@@ -1,4 +1,4 @@
-package hologram
+package enigma
 
 import (
 	"crypto/cipher"
@@ -380,7 +380,7 @@ func (r *fileSyncMapRack) get(nonce nonceType) *fileSyncMap {
 }
 
 // fileSyncBlock is the block that controls the behaviour
-// among multiple file at the same path managed by hologram.
+// among multiple file at the same path managed by enigma.
 //
 // Special care must be taken when playing with file boundary,
 // that is, writing to the boundary of the file.
@@ -751,13 +751,13 @@ func convertFileMode(mode os.FileMode) fileMode {
 	return fileModeOther
 }
 
-func (hfs *Fs) OpenFile(
+func (efs *Fs) OpenFile(
 	name string, flag int, perm os.FileMode,
 ) (afero.File, error) {
 	name = cleanPath(name)
-	value := hfs.evaluateCacheValue(name)
+	value := efs.evaluateCacheValue(name)
 	nonce := value.nonce
-	realPath := filepath.Join(hfs.prefix, value.prefix)
+	realPath := filepath.Join(efs.prefix, value.prefix)
 	base := &fileBase{
 		name: name,
 	}
@@ -768,7 +768,7 @@ func (hfs *Fs) OpenFile(
 	// constant values (0, 1 and 2), but it is safe for
 	// us now since linux, windows and darwin holds.
 	if flag&(os.O_WRONLY|os.O_RDWR|os.O_CREATE|os.O_TRUNC) == 0 {
-		f, err := hfs.inner.OpenFile(realPath, flag, perm)
+		f, err := efs.inner.OpenFile(realPath, flag, perm)
 		if err != nil {
 			return nil, cleansePathError(name, err)
 		}
@@ -788,8 +788,8 @@ func (hfs *Fs) OpenFile(
 			f = nil
 			return &dir{
 				fileBase: base,
-				config:   hfs.config,
-				block:    hfs.block,
+				config:   efs.config,
+				block:    efs.block,
 				nonce:    nonce,
 			}, nil
 		case fileModeRegular:
@@ -797,7 +797,7 @@ func (hfs *Fs) OpenFile(
 			f = nil
 			return &readOnlyFile{
 				fileBase: base,
-				ctr:      newRandCTR(hfs.block, nonce[16:]),
+				ctr:      newRandCTR(efs.block, nonce[16:]),
 			}, nil
 		default:
 			return nil, errors.Errorf("unsupported file type %q", mode)
@@ -806,10 +806,10 @@ func (hfs *Fs) OpenFile(
 
 	// The file will be open for read, so we ensure that
 	// we are operating on writable file system.
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return nil, pathError("open", name, syscall.EROFS)
 	}
-	fsyncMap := hfs.rack.get(nonce)
+	fsyncMap := efs.rack.get(nonce)
 	fsyncMapLocked := false
 	notifyLockedTrunc := false
 
@@ -835,7 +835,7 @@ func (hfs *Fs) OpenFile(
 	}
 
 	// Open the file for now to retrieve the file.
-	f, err := hfs.inner.OpenFile(realPath, flag, perm)
+	f, err := efs.inner.OpenFile(realPath, flag, perm)
 	if err != nil {
 		return nil, cleansePathError(name, err)
 	}
@@ -860,12 +860,12 @@ func (hfs *Fs) OpenFile(
 		f = nil
 		return &dir{
 			fileBase: base,
-			config:   hfs.config,
-			block:    hfs.block,
+			config:   efs.config,
+			block:    efs.block,
 			nonce:    nonce,
 		}, nil
 	case fileModeRegular:
-		randCTR := newRandCTR(hfs.block, nonce[16:])
+		randCTR := newRandCTR(efs.block, nonce[16:])
 		var fsyncBlock *fileSyncBlock
 		if fsyncMapLocked {
 			fsyncBlock = fsyncMap.getLocked(name, size)
@@ -896,18 +896,18 @@ func (hfs *Fs) OpenFile(
 	}
 }
 
-func (hfs *Fs) Remove(name string) error {
-	if !hfs.readWrite {
+func (efs *Fs) Remove(name string) error {
+	if !efs.readWrite {
 		return pathError("remove", name, syscall.EROFS)
 	}
 	name = cleanPath(name)
-	value := hfs.evaluateCacheValue(name)
+	value := efs.evaluateCacheValue(name)
 	nonce := value.nonce
-	realPath := filepath.Join(hfs.prefix, value.prefix)
-	fsyncMap := hfs.rack.get(nonce)
+	realPath := filepath.Join(efs.prefix, value.prefix)
+	fsyncMap := efs.rack.get(nonce)
 	fsyncMap.mtx.Lock()
 	defer fsyncMap.mtx.Unlock()
-	if err := hfs.inner.Remove(realPath); err != nil {
+	if err := efs.inner.Remove(realPath); err != nil {
 		return cleansePathError(name, err)
 	}
 	fsyncMap.evictLocked(name)
