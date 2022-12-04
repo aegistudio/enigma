@@ -1,0 +1,41 @@
+// protoc --go_out=. ./proto/hologram.proto
+syntax = "proto3";
+
+package hologram;
+
+// Config is the backward compatible config of filesystem.
+//
+// The message is created in the init phase of hologram
+// filesystem, and must remain immutable upon the execution
+// of the filesystem.
+message Config {
+	// Version of the hologram filesystem config.
+	//
+	// The version must increment by 1 per modification.
+	// The config has backward compatibility, which means the
+	// filesystem engine must not attempt to open or modify
+	// the filesystem of newer version, while must support
+	// opening and modifying the one of older version one.
+	uint64 version = 1;
+
+	// Key is the AES-256 key of the filesystem.
+	//
+	// The field must be of length 32 since it is an AES-256
+	// key. Since protobuf does not support defining byte
+	// array of fixed length, an extra check of length will
+	// be done on this field.
+	bytes key = 2;
+
+	// PrefixLength is the length of nonce prefixing the
+	// filename under each directories.
+	//
+	// The file names under each directories are protected
+	// by a nonce prefix which is calculated from the real
+	// file name and file name's length, through some pseudo
+	// random process involving the key eventually.
+	//
+	// The minimum value of this field is 1 and maximum value
+	// of this field is 8. Values exceeding this boundary
+	// will be clamped towards the boundary.
+	uint32 prefix_length = 3;
+}

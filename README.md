@@ -6,10 +6,13 @@ secrets.
 
 ## Roadmap
 
+* Operation Mode
+  * [x] Hologram mode
+  * [ ] POSIX-compatible mode
 * Key Specification
   * [x] File (prone to invasion) [^1]
   * [ ] Vault (with [github.com/hashicorp/vault](https://github.com/hashicorp/vault))
-  * [ ] HTTP Request (remote decryption)
+  * [ ] HTTP request (remote decryption)
 * Integration
   * [x] HTTP (trivially by Golang's `http` library)
   * [x] FTP (with [github.com/fclairamb/ftpserverlib](https://github.com/fclairamb/ftpserverlib))
@@ -41,12 +44,18 @@ need to spend any extra space to store the nonce.
 
 Under the same directory, encrypting file names with the same nonce
 directly is prone to [chosen-plaintext attack](https://en.wikipedia.org/wiki/Chosen-plaintext_attack).
-To mitigate, we generate a short extra nonce (1-3 bytes) for each
-file name, which is computed from the cryptological digest. Then the
-nonce for the file name is computed from the digest of the directory
-it is in, plus the short extra nonce and the file's length. After
-being encrypted, the file name is encoded in Base64 as it is usually
-in invalid ASCII or Unicode.
+To mitigate, we generate a short extra nonce for each file name,
+which is computed from the cryptological digest. Then the nonce for
+the file name is computed from the digest of the directory it is in,
+plus the short extra nonce and the file's length. After being
+encrypted, the file name is encoded in Base64 as it is usually in
+invalid ASCII or Unicode.
+
+For resisting [birthday attack](https://en.wikipedia.org/wiki/Birthday_attack),
+the default extra nonce size is 3 bytes, which yields a birthday
+bound of about `Q(H) = 46819.7` files and low possibility bound of
+about `n(H;0.25%) = 2813.6` files [^2], and is considered providing
+enough security under most circumstances.
 
 The AES-256 key for encrypting the file system, is randomly generated
 through a cryptologically secure random process, then encrypted and
@@ -65,3 +74,7 @@ depicts what they have modified for users' judgement.
 [^1]: Storing your key as regular files on the disk directly can be
 a security issue if your physical machine has been invaded. It's not
 so risky if the key is transfered over TTY, pipe, socket, etc.
+[^2]: Assume native file system supports file name of maximum 128
+bytes, there're `(128-1) * 6 / 8 - 1 = 94.25` cases of file names'
+length. The number of outputs for file names' nonces is
+`H = 94.25 * (2^24) = 1581252608.0`.
