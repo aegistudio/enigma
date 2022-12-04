@@ -105,13 +105,14 @@ func (f *fileInfoSlice) Swap(i, j int) {
 // ordered, we requires that
 type dir struct {
 	*fileBase
-	block cipher.Block
-	nonce nonceType
-	once  sync.Once
-	mtx   sync.Mutex
-	err   error
-	stats []os.FileInfo
-	names []string
+	config *Config
+	block  cipher.Block
+	nonce  nonceType
+	once   sync.Once
+	mtx    sync.Mutex
+	err    error
+	stats  []os.FileInfo
+	names  []string
 }
 
 func (d *dir) Read([]byte) (int, error) {
@@ -147,7 +148,8 @@ func (d *dir) Readdir(count int) ([]os.FileInfo, error) {
 		// Filter the stat blocks and reform them here.
 		var realStats []os.FileInfo
 		for _, stat := range stats {
-			realName := d.nonce.decryptName(d.block, []byte(stat.Name()))
+			realName := d.nonce.decryptName(
+				d.config, d.block, []byte(stat.Name()))
 			if realName == "" {
 				continue
 			}
@@ -193,7 +195,8 @@ func (d *dir) Readdirnames(count int) ([]string, error) {
 		// Filter the file names and reform them here.
 		var realNames []string
 		for _, name := range names {
-			realName := d.nonce.decryptName(d.block, []byte(name))
+			realName := d.nonce.decryptName(
+				d.config, d.block, []byte(name))
 			if realName == "" {
 				continue
 			}
@@ -785,6 +788,7 @@ func (hfs *Fs) OpenFile(
 			f = nil
 			return &dir{
 				fileBase: base,
+				config:   hfs.config,
 				block:    hfs.block,
 				nonce:    nonce,
 			}, nil
@@ -856,6 +860,7 @@ func (hfs *Fs) OpenFile(
 		f = nil
 		return &dir{
 			fileBase: base,
+			config:   hfs.config,
 			block:    hfs.block,
 			nonce:    nonce,
 		}, nil

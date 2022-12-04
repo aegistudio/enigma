@@ -17,13 +17,21 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
+	protobuf "google.golang.org/protobuf/proto"
+
+	proto "github.com/aegistudio/hologram/proto"
 )
 
+// Config is the backward compatible filesystem config.
+type Config = proto.Config
+
 const (
-	// maxNoncePrefix is the maximum number of components
-	// generated for prefixing file name. There must be at
-	// least one and at most maxNoncePrefix component.
-	maxNoncePrefix = 3
+	// CurrentVersion is the version of filesystem config.
+	//
+	// This field should be increment by one every time we
+	// modify the layout of protobuf. The field is also used
+	// to detect whether we support the specified filesystem.
+	CurrentVersion = 1
 
 	// subcipherName is the name of the subcipher's file.
 	subcipherName = ".hologram"
@@ -32,12 +40,35 @@ const (
 	writerName = ".writer"
 )
 
+// validateNormalizeConfig is the function trying to check
+// whether the config is valid and normalize the config by
+// filling the default fields inside (for those from older
+// versions).
+func validateNormalizeConfig(config *Config) error {
+	if config.Version > CurrentVersion {
+		return errors.New("current engine is too old")
+	}
+	if len(config.Key) != 32 {
+		return errors.New("key unspecified in config")
+	}
+	if config.PrefixLength < 1 {
+		config.PrefixLength = 1
+	}
+	if config.PrefixLength > 8 {
+		config.PrefixLength = 8
+	}
+	return nil
+}
+
 // Init initializes the root filesystem under the path,
 // marking current directory as the root.
 //
 // The specified directory must exist, and there's no
 // current pre-existing subcipher under the path.
-func Init(inner afero.Fs, rootKey cipher.AEAD, path string) error {
+func Init(
+	inner afero.Fs, rootKey cipher.AEAD, path string,
+	userConfig Config,
+) error {
 	stat, err := inner.Stat(path)
 	if err != nil {
 		return err
@@ -61,7 +92,17 @@ func Init(inner afero.Fs, rootKey cipher.AEAD, path string) error {
 	if _, err := cryptoRand.Read(key[:]); err != nil {
 		return err
 	}
-	cipher := rootKey.Seal(nil, nonce, key[:], nil)
+	config := userConfig
+	config.Version = CurrentVersion
+	config.Key = key[:]
+	if err := validateNormalizeConfig(&config); err != nil {
+		return err
+	}
+	data, err := protobuf.Marshal(&config)
+	if err != nil {
+		return err
+	}
+	cipher := rootKey.Seal(nil, nonce, data[:], nil)
 	var content []byte
 	content = append(content, nonce...)
 	content = append(content, cipher...)
@@ -83,6 +124,7 @@ func Init(inner afero.Fs, rootKey cipher.AEAD, path string) error {
 // Fs implements the filesystem of hologram.
 type Fs struct {
 	inner  afero.Fs
+	config *Config
 	prefix string
 	block  cipher.Block
 
@@ -186,15 +228,23 @@ func New(
 	if err != nil {
 		return nil, errReadCipher(err)
 	}
-	if len(data) < nonceSize+32 {
+	if len(data) < nonceSize {
 		return nil, errReadCipher(errors.New("malformed data"))
 	}
 	nonce := data[:nonceSize]
 	cipher := data[nonceSize:]
-	key, err := rootKey.Open(nil, nonce, cipher, nil)
+	configData, err := rootKey.Open(nil, nonce, cipher, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "decrypt subcipher")
+		return nil, errors.Wrap(err, "decrypt config")
 	}
+	config := &Config{}
+	if err := protobuf.Unmarshal(configData, config); err != nil {
+		return nil, errors.Wrap(err, "decode config")
+	}
+	if err := validateNormalizeConfig(config); err != nil {
+		return nil, errors.Wrap(err, "validate config")
+	}
+	key := config.Key
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, errors.Wrap(err, "create subcipher")
@@ -204,6 +254,7 @@ func New(
 	// panics creating dangling files here.
 	result := &Fs{
 		inner:  inner,
+		config: config,
 		prefix: path,
 		block:  block,
 		cache:  cache,
@@ -294,7 +345,8 @@ func (hfs *Fs) evaluateCacheValue(path string) *cacheValue {
 	}
 	name := []byte(file)
 	nonce := parentCache.nonce.evaluateNonce(name)
-	component := parentCache.nonce.encryptName(hfs.block, name)
+	component := parentCache.nonce.encryptName(
+		hfs.config, hfs.block, name)
 	result := &cacheValue{
 		nonce:  nonce,
 		prefix: filepath.Join(parentCache.prefix, component),

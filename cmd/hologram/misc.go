@@ -19,17 +19,24 @@ import (
 	"github.com/aegistudio/hologram"
 )
 
+var cfg = hologram.Config{
+	PrefixLength: 3,
+}
+
 var cmdInit = &cobra.Command{
 	Use:   "init",
 	Short: "initialize hologram file system at path",
 	RunE: serpent.Executor(shaft.Invoke(func(
 		base *baseFsPath, rootKey cipher.AEAD,
 	) error {
-		return hologram.Init(base.baseFs, rootKey, base.path)
+		return hologram.Init(base.baseFs, rootKey, base.path, cfg)
 	})).RunE,
 }
 
 func init() {
+	cmdInit.PersistentFlags().Uint32Var(
+		&cfg.PrefixLength, "prefix-length", cfg.PrefixLength,
+		"length of file name's nonce prefix")
 	rootCmd.AddCommand(cmdInit)
 }
 

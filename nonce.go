@@ -31,22 +31,15 @@ func (n nonceType) evaluateNonce(name []byte) nonceType {
 
 // evaluateNoncePrefix attempts to evaluate the nonce prefix
 // for the specified name.
-func (n nonceType) evaluateNoncePrefix(name []byte) []byte {
+func (n nonceType) evaluateNoncePrefix(
+	config *Config, name []byte,
+) []byte {
 	var nonceInput []byte
 	nonceInput = append(nonceInput, n[:]...)
 	nonceInput = append(nonceInput, []byte("noncePrefix")...)
 	nonceInput = append(nonceInput, name...)
 	nonceOutput := sha256.Sum256(nonceInput)
-	var noncePrefix []byte
-	for i := 0; i < maxNoncePrefix; i++ {
-		// Append one or more keys into the path component.
-		current := nonceOutput[i]
-		noncePrefix = append(noncePrefix, current)
-		if int(uint8(current)) < 0x080 {
-			break
-		}
-	}
-	return noncePrefix
+	return nonceOutput[:config.PrefixLength]
 }
 
 // xorNameCipher encrypts or decrypts the specified content.
@@ -70,10 +63,10 @@ func (n nonceType) xorNameCipher(
 // encryptName attempts to evaluate the file name with the
 // specified cache value.
 func (n nonceType) encryptName(
-	block cipher.Block, name []byte,
+	config *Config, block cipher.Block, name []byte,
 ) string {
 	var result []byte
-	noncePrefix := n.evaluateNoncePrefix(name)
+	noncePrefix := n.evaluateNoncePrefix(config, name)
 	cipherText := n.xorNameCipher(block, noncePrefix, name)
 	result = append(result, noncePrefix...)
 	result = append(result, cipherText...)
@@ -83,7 +76,7 @@ func (n nonceType) encryptName(
 // decryptName attempts to decrypt the real name of a file
 // and checks whether it is a valid file name.
 func (n nonceType) decryptName(
-	block cipher.Block, name []byte,
+	config *Config, block cipher.Block, name []byte,
 ) string {
 	if len(name) < 1 || name[0] != '@' {
 		return ""
@@ -95,19 +88,15 @@ func (n nonceType) decryptName(
 	}
 
 	// Extract the nonce prefix from the list.
-	var noncePrefix []byte
-	for i := 0; i < maxNoncePrefix; i++ {
-		current := name[0]
-		noncePrefix = append(noncePrefix, current)
-		name = name[1:]
-		if int(uint8(current)) < 0x080 {
-			break
-		}
+	if len(name) < int(config.PrefixLength) {
+		return ""
 	}
+	noncePrefix := name[:config.PrefixLength]
+	name = name[config.PrefixLength:]
 
 	// Evaluate and validate whether the cipher is valid.
 	plainText := n.xorNameCipher(block, noncePrefix, name)
-	trueNoncePrefix := n.evaluateNoncePrefix(plainText)
+	trueNoncePrefix := n.evaluateNoncePrefix(config, plainText)
 	if !bytes.Equal(noncePrefix, trueNoncePrefix) {
 		return ""
 	}
