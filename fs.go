@@ -57,6 +57,11 @@ func validateNormalizeConfig(config *Config) error {
 	if config.PrefixLength > 8 {
 		config.PrefixLength = 8
 	}
+	filenameEncoding := config.FilenameEncoding
+	if filenameEncoding >= proto.FilenameEncoding_MAX {
+		return errors.Errorf(
+			"unknown filename encoding %d", int(filenameEncoding))
+	}
 	return nil
 }
 

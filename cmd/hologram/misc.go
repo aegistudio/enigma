@@ -17,10 +17,33 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aegistudio/hologram"
+	proto "github.com/aegistudio/hologram/proto"
 )
 
 var cfg = hologram.Config{
 	PrefixLength: 3,
+}
+
+type filenameEncoding struct {
+	ptr *proto.FilenameEncoding
+}
+
+func (e filenameEncoding) String() string {
+	return e.ptr.String()
+}
+
+func (e filenameEncoding) Type() string {
+	return "string"
+}
+
+func (e filenameEncoding) Set(value string) error {
+	result, ok := proto.FilenameEncoding_value[value]
+	if !ok {
+		return errors.Errorf(
+			"unknown filename encoding %q", value)
+	}
+	*e.ptr = proto.FilenameEncoding(result)
+	return nil
 }
 
 var cmdInit = &cobra.Command{
@@ -37,6 +60,9 @@ func init() {
 	cmdInit.PersistentFlags().Uint32Var(
 		&cfg.PrefixLength, "prefix-length", cfg.PrefixLength,
 		"length of file name's nonce prefix")
+	cmdInit.PersistentFlags().Var(
+		filenameEncoding{&cfg.FilenameEncoding}, "filename-encoding",
+		"encoding method of the encrypted file name")
 	rootCmd.AddCommand(cmdInit)
 }
 

@@ -3,6 +3,19 @@ syntax = "proto3";
 
 package hologram;
 
+// FilenameEncoding tells how to write encrypted file names
+// to the native filesystem.
+//
+// BASE64 is chosen as the ultimate fallback to work on all
+// filesystems, while more efficient encoding methods can
+// be chosen. By default the one compatible with current
+// operating system might be chosen.
+enum FilenameEncoding {
+	BASE64 = 0;
+	BASE85 = 1;
+	MAX = 2; // placeholder and should not be chosen.
+}
+
 // Config is the backward compatible config of filesystem.
 //
 // The message is created in the init phase of hologram
@@ -38,4 +51,8 @@ message Config {
 	// of this field is 8. Values exceeding this boundary
 	// will be clamped towards the boundary.
 	uint32 prefix_length = 3;
+
+	// FilenameEncoding is the currently selected encoding
+	// for writing encrytped filename to local filesystem.
+	FilenameEncoding FilenameEncoding = 4;
 }

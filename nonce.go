@@ -6,6 +6,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
+
+	"github.com/jamesruan/go-rfc1924/base85"
+
+	proto "github.com/aegistudio/hologram/proto"
 )
 
 // nonceType value correlated to path from root.
@@ -60,6 +64,13 @@ func (n nonceType) xorNameCipher(
 	return result
 }
 
+type encodeFunc func([]byte) string
+
+var encodeToString = [proto.FilenameEncoding_MAX]encodeFunc{
+	base64.RawURLEncoding.EncodeToString,
+	base85.EncodeToString,
+}
+
 // encryptName attempts to evaluate the file name with the
 // specified cache value.
 func (n nonceType) encryptName(
@@ -70,7 +81,14 @@ func (n nonceType) encryptName(
 	cipherText := n.xorNameCipher(block, noncePrefix, name)
 	result = append(result, noncePrefix...)
 	result = append(result, cipherText...)
-	return "@" + base64.RawURLEncoding.EncodeToString(result)
+	return "@" + encodeToString[config.FilenameEncoding](result)
+}
+
+type decodeFunc func(string) ([]byte, error)
+
+var decodeString = [proto.FilenameEncoding_MAX]decodeFunc{
+	base64.RawURLEncoding.DecodeString,
+	base85.DecodeString,
 }
 
 // decryptName attempts to decrypt the real name of a file
@@ -82,7 +100,7 @@ func (n nonceType) decryptName(
 		return ""
 	}
 	name = name[1:]
-	name, err := base64.RawURLEncoding.DecodeString(string(name))
+	name, err := decodeString[config.FilenameEncoding](string(name))
 	if err != nil {
 		return ""
 	}

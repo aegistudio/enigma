@@ -6,6 +6,7 @@ require (
 	github.com/aegistudio/shaft v0.0.0-20221023182702-de3982a0a277
 	github.com/fclairamb/ftpserverlib v0.20.0
 	github.com/hashicorp/golang-lru v0.6.0
+	github.com/jamesruan/go-rfc1924 v0.0.0-20170108144916-2767ca7c638f
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/cobra v1.6.1
