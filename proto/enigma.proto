@@ -1,15 +1,15 @@
-// protoc --go_out=. ./proto/hologram.proto
+// protoc --go_out=. ./proto/enigma.proto
 syntax = "proto3";
 
-package hologram;
+package enigma;
 
 // Config is the backward compatible config of filesystem.
 //
-// The message is created in the init phase of hologram
+// The message is created in the init phase of enigma
 // filesystem, and must remain immutable upon the execution
 // of the filesystem.
 message Config {
-	// Version of the hologram filesystem config.
+	// Version of the enigma filesystem config.
 	//
 	// The version must increment by 1 per modification.
 	// The config has backward compatibility, which means the

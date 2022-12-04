@@ -16,20 +16,20 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
-	"github.com/aegistudio/hologram"
+	"github.com/aegistudio/enigma"
 )
 
-var cfg = hologram.Config{
+var cfg = enigma.Config{
 	PrefixLength: 3,
 }
 
 var cmdInit = &cobra.Command{
 	Use:   "init",
-	Short: "initialize hologram file system at path",
+	Short: "initialize enigma file system at path",
 	RunE: serpent.Executor(shaft.Invoke(func(
 		base *baseFsPath, rootKey cipher.AEAD,
 	) error {
-		return hologram.Init(base.baseFs, rootKey, base.path, cfg)
+		return enigma.Init(base.baseFs, rootKey, base.path, cfg)
 	})).RunE,
 }
 
@@ -52,7 +52,7 @@ var cmdMkdir = &cobra.Command{
 	RunE: serpent.Executor(shaft.Module(
 		withReadWriteOption,
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			mkdir := hfs.Mkdir
 			if mkdirParents {
@@ -82,11 +82,11 @@ var (
 
 var cmdTee = &cobra.Command{
 	Use:   "tee",
-	Short: "tee command for hologram file system",
+	Short: "tee command for enigma file system",
 	RunE: serpent.Executor(shaft.Module(
 		withReadWriteOption,
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			var writers []io.Writer
 			extraMode := os.O_TRUNC
@@ -119,10 +119,10 @@ func init() {
 
 var cmdCat = &cobra.Command{
 	Use:   "cat",
-	Short: "cat command for hologram file system",
+	Short: "cat command for enigma file system",
 	RunE: serpent.Executor(shaft.Module(
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			for _, name := range args {
 				f, err := hfs.Open(name)
@@ -149,11 +149,11 @@ var (
 
 var cmdRm = &cobra.Command{
 	Use:   "rm",
-	Short: "rm command for hologram file system",
+	Short: "rm command for enigma file system",
 	RunE: serpent.Executor(shaft.Module(
 		withReadWriteOption,
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			remove := hfs.Remove
 			if rmRecursive {
@@ -182,12 +182,12 @@ var (
 
 var cmdMv = &cobra.Command{
 	Use:   "mv",
-	Short: "mv command for hologram file system",
+	Short: "mv command for enigma file system",
 	Args:  cobra.ExactArgs(2),
 	RunE: serpent.Executor(shaft.Module(
 		withReadWriteOption,
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			move := hfs.Rename
 			if mvMerge {
@@ -259,10 +259,10 @@ func listFull(infos []os.FileInfo) error {
 
 var cmdLs = &cobra.Command{
 	Use:   "ls",
-	Short: "ls command for hologram file system",
+	Short: "ls command for enigma file system",
 	RunE: serpent.Executor(shaft.Module(
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			if len(args) == 0 {
 				args = serpent.CommandArgs([]string{"/"})
@@ -331,11 +331,11 @@ var (
 
 var cmdFind = &cobra.Command{
 	Use:   "find",
-	Short: "find command for hologram file system",
+	Short: "find command for enigma file system",
 	Args:  cobra.ExactArgs(1),
 	RunE: serpent.Executor(shaft.Module(
 		shaft.Invoke(func(
-			hfs *hologram.Fs, args serpent.CommandArgs,
+			hfs *enigma.Fs, args serpent.CommandArgs,
 		) error {
 			if findNamePattern != "" {
 				if _, err := filepath.Match(

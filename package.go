@@ -1,4 +1,4 @@
-// Package hologram implements the simple encrypted filesystem.
+// Package enigma implements the simple encrypted filesystem.
 //
 // The filesystem is specified a block cipher which is used to
 // encrypt the subcipher of the filesystem. The subcipher is
@@ -13,7 +13,7 @@
 // corresponding nonce generated in a deterministic process. The
 // file will be encrypted by their file names, which means each
 // file must be re-encrypted when it is renamed.
-package hologram
+package enigma
 
 import (
 	"io/fs"

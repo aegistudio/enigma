@@ -1,4 +1,4 @@
-package hologram
+package enigma
 
 import (
 	"crypto/aes"
@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/afero"
 	protobuf "google.golang.org/protobuf/proto"
 
-	proto "github.com/aegistudio/hologram/proto"
+	proto "github.com/aegistudio/enigma/proto"
 )
 
 // Config is the backward compatible filesystem config.
@@ -34,7 +34,7 @@ const (
 	CurrentVersion = 1
 
 	// subcipherName is the name of the subcipher's file.
-	subcipherName = ".hologram"
+	subcipherName = ".enigma"
 
 	// writerName is the name of the write locker's file.
 	writerName = ".writer"
@@ -121,7 +121,7 @@ func Init(
 	return nil
 }
 
-// Fs implements the filesystem of hologram.
+// Fs implements the filesystem of enigma.
 type Fs struct {
 	inner  afero.Fs
 	config *Config
@@ -313,9 +313,9 @@ func New(
 }
 
 // Close the file system, removing locks and temporary files.
-func (hfs *Fs) Close() {
-	if hfs.readWrite {
-		_ = hfs.inner.Remove(filepath.Join(hfs.prefix, writerName))
+func (efs *Fs) Close() {
+	if efs.readWrite {
+		_ = efs.inner.Remove(filepath.Join(efs.prefix, writerName))
 	}
 }
 
@@ -328,17 +328,17 @@ type cacheValue struct {
 
 // evaluateCacheValue attempts to evaluate the cache value
 // corresponding to specified path. Result will be cached.
-func (hfs *Fs) evaluateCacheValue(path string) *cacheValue {
-	if val, ok := hfs.cache.Get(path); ok {
+func (efs *Fs) evaluateCacheValue(path string) *cacheValue {
+	if val, ok := efs.cache.Get(path); ok {
 		return val.(*cacheValue)
 	}
 	dir, file := filepath.Split(path)
 	if file == "" && len(dir) > 0 { // "<path>/"
 		dir, file = filepath.Split(dir[:len(dir)-1])
 	}
-	parentCache := hfs.cacheRoot
+	parentCache := efs.cacheRoot
 	if dir != "" {
-		parentCache = hfs.evaluateCacheValue(dir)
+		parentCache = efs.evaluateCacheValue(dir)
 	}
 	if file == "" {
 		return parentCache
@@ -346,12 +346,12 @@ func (hfs *Fs) evaluateCacheValue(path string) *cacheValue {
 	name := []byte(file)
 	nonce := parentCache.nonce.evaluateNonce(name)
 	component := parentCache.nonce.encryptName(
-		hfs.config, hfs.block, name)
+		efs.config, efs.block, name)
 	result := &cacheValue{
 		nonce:  nonce,
 		prefix: filepath.Join(parentCache.prefix, component),
 	}
-	hfs.cache.Add(path, result)
+	efs.cache.Add(path, result)
 	return result
 }
 
@@ -366,32 +366,32 @@ func cleanPath(p string) string {
 // evaluateCleanPath evaluate the ptah relative to the
 // inner file system. This comes handy for those don't
 // need the cache value.
-func (hfs *Fs) evaluateCleanPath(cleanPath string) string {
-	value := hfs.evaluateCacheValue(cleanPath)
-	return filepath.Join(hfs.prefix, value.prefix)
+func (efs *Fs) evaluateCleanPath(cleanPath string) string {
+	value := efs.evaluateCacheValue(cleanPath)
+	return filepath.Join(efs.prefix, value.prefix)
 }
 
-func (hfs *Fs) Mkdir(name string, perm os.FileMode) error {
+func (efs *Fs) Mkdir(name string, perm os.FileMode) error {
 	name = cleanPath(name)
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return pathError("mkdir", name, syscall.EROFS)
 	}
-	p := hfs.evaluateCleanPath(name)
-	return cleansePathError(name, hfs.inner.Mkdir(p, perm))
+	p := efs.evaluateCleanPath(name)
+	return cleansePathError(name, efs.inner.Mkdir(p, perm))
 }
 
-func (hfs *Fs) MkdirAll(name string, perm os.FileMode) error {
+func (efs *Fs) MkdirAll(name string, perm os.FileMode) error {
 	name = cleanPath(name)
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return pathError("mkdir", name, syscall.EROFS)
 	}
-	p := hfs.evaluateCleanPath(name)
-	return cleansePathError(name, hfs.inner.MkdirAll(p, perm))
+	p := efs.evaluateCleanPath(name)
+	return cleansePathError(name, efs.inner.MkdirAll(p, perm))
 }
 
-func (hfs *Fs) statCleanPath(name string) (os.FileInfo, error) {
-	p := hfs.evaluateCleanPath(name)
-	info, err := hfs.inner.Stat(p)
+func (efs *Fs) statCleanPath(name string) (os.FileInfo, error) {
+	p := efs.evaluateCleanPath(name)
+	info, err := efs.inner.Stat(p)
 	if err != nil {
 		return nil, cleansePathError(name, err)
 	}
@@ -399,89 +399,89 @@ func (hfs *Fs) statCleanPath(name string) (os.FileInfo, error) {
 	return &fileInfo{name: n, info: info}, nil
 }
 
-func (hfs *Fs) Stat(name string) (os.FileInfo, error) {
-	return hfs.statCleanPath(cleanPath(name))
+func (efs *Fs) Stat(name string) (os.FileInfo, error) {
+	return efs.statCleanPath(cleanPath(name))
 }
 
 func (*Fs) Name() string {
-	return "hologram"
+	return "enigma"
 }
 
-func (hfs *Fs) Chmod(name string, mode os.FileMode) error {
+func (efs *Fs) Chmod(name string, mode os.FileMode) error {
 	name = cleanPath(name)
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return pathError("chmod", name, syscall.EROFS)
 	}
-	p := hfs.evaluateCleanPath(name)
-	return cleansePathError(name, hfs.inner.Chmod(p, mode))
+	p := efs.evaluateCleanPath(name)
+	return cleansePathError(name, efs.inner.Chmod(p, mode))
 }
 
-func (hfs *Fs) Chown(name string, uid, gid int) error {
+func (efs *Fs) Chown(name string, uid, gid int) error {
 	name = cleanPath(name)
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return pathError("chown", name, syscall.EROFS)
 	}
-	p := hfs.evaluateCleanPath(name)
-	return cleansePathError(name, hfs.inner.Chown(p, uid, gid))
+	p := efs.evaluateCleanPath(name)
+	return cleansePathError(name, efs.inner.Chown(p, uid, gid))
 }
 
-func (hfs *Fs) Chtimes(name string, atime, mtime time.Time) error {
+func (efs *Fs) Chtimes(name string, atime, mtime time.Time) error {
 	name = cleanPath(name)
-	if !hfs.readWrite {
+	if !efs.readWrite {
 		return pathError("chtimes", name, syscall.EROFS)
 	}
-	p := hfs.evaluateCleanPath(name)
-	return cleansePathError(name, hfs.inner.Chtimes(p, atime, mtime))
+	p := efs.evaluateCleanPath(name)
+	return cleansePathError(name, efs.inner.Chtimes(p, atime, mtime))
 }
 
-func (hfs *Fs) Create(name string) (afero.File, error) {
-	return hfs.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+func (efs *Fs) Create(name string) (afero.File, error) {
+	return efs.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 }
 
-func (hfs *Fs) Open(name string) (afero.File, error) {
-	return hfs.OpenFile(name, os.O_RDONLY, 0)
+func (efs *Fs) Open(name string) (afero.File, error) {
+	return efs.OpenFile(name, os.O_RDONLY, 0)
 }
 
-func (hfs *Fs) removeDir(name string) error {
-	dirents, err := afero.ReadDir(hfs, name)
+func (efs *Fs) removeDir(name string) error {
+	dirents, err := afero.ReadDir(efs, name)
 	if err != nil {
 		return err
 	}
 	for _, dirent := range dirents {
 		path := filepath.Join(name, dirent.Name())
 		if dirent.IsDir() {
-			if err := hfs.removeDir(path); err != nil {
+			if err := efs.removeDir(path); err != nil {
 				return err
 			}
 		}
-		if err := hfs.Remove(path); err != nil {
+		if err := efs.Remove(path); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (hfs *Fs) RemoveAll(name string) error {
+func (efs *Fs) RemoveAll(name string) error {
 	name = cleanPath(name)
-	info, err := hfs.statCleanPath(name)
+	info, err := efs.statCleanPath(name)
 	if err != nil {
 		return err
 	}
 	if info.IsDir() {
-		if err := hfs.removeDir(name); err != nil {
+		if err := efs.removeDir(name); err != nil {
 			return err
 		}
 		if name == "" || name == "/" {
 			return nil
 		}
 	}
-	return hfs.Remove(name)
+	return efs.Remove(name)
 }
 
-func (hfs *Fs) renameFile(
+func (efs *Fs) renameFile(
 	src, dst string, mode os.FileMode, replace bool,
 ) error {
-	srcFile, err := hfs.Open(src)
+	srcFile, err := efs.Open(src)
 	if err != nil {
 		return err
 	}
@@ -490,16 +490,16 @@ func (hfs *Fs) renameFile(
 			_ = srcFile.Close()
 		}
 	}()
-	dstFile, err := hfs.OpenFile(
+	dstFile, err := efs.OpenFile(
 		dst, os.O_RDWR|os.O_CREATE|os.O_EXCL, mode)
 	if err != nil {
 		if !os.IsExist(err) || !replace {
 			return err
 		}
-		if err := hfs.Remove(dst); err != nil {
+		if err := efs.Remove(dst); err != nil {
 			return err
 		}
-		dstFile, err = hfs.OpenFile(
+		dstFile, err = efs.OpenFile(
 			dst, os.O_RDWR|os.O_CREATE|os.O_EXCL, mode)
 		if err != nil {
 			return err
@@ -513,11 +513,11 @@ func (hfs *Fs) renameFile(
 		return err
 	}
 	srcFile = nil
-	return hfs.Remove(src)
+	return efs.Remove(src)
 }
 
-func (hfs *Fs) mergeDir(src, dst string) error {
-	dentries, err := afero.ReadDir(hfs, src)
+func (efs *Fs) mergeDir(src, dst string) error {
+	dentries, err := afero.ReadDir(efs, src)
 	if err != nil {
 		return err
 	}
@@ -527,19 +527,19 @@ func (hfs *Fs) mergeDir(src, dst string) error {
 		dstPath := filepath.Join(dst, name)
 		mode := dentry.Mode()
 		if dentry.IsDir() {
-			if err := hfs.Mkdir(dstPath, mode); err != nil {
+			if err := efs.Mkdir(dstPath, mode); err != nil {
 				if !os.IsExist(err) {
 					return err
 				}
 			}
-			if err := hfs.mergeDir(srcPath, dstPath); err != nil {
+			if err := efs.mergeDir(srcPath, dstPath); err != nil {
 				return err
 			}
-			if err := hfs.Remove(srcPath); err != nil {
+			if err := efs.Remove(srcPath); err != nil {
 				return err
 			}
 		} else {
-			if err := hfs.renameFile(
+			if err := efs.renameFile(
 				srcPath, dstPath, mode, true); err != nil {
 				return err
 			}
@@ -556,14 +556,14 @@ func underCleanPath(a, b string) (bool, bool) {
 	return strings.HasPrefix(a, b), strings.HasPrefix(b, a)
 }
 
-func (hfs *Fs) Merge(src, dst string) error {
+func (efs *Fs) Merge(src, dst string) error {
 	src = cleanPath(src)
 	dst = cleanPath(dst)
 	srcUnderDst, dstUnderSrc := underCleanPath(src, dst)
 	if !srcUnderDst && dstUnderSrc {
 		return pathError(src, "rename", syscall.EINVAL)
 	}
-	srcInfo, err := hfs.Stat(src)
+	srcInfo, err := efs.Stat(src)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func (hfs *Fs) Merge(src, dst string) error {
 		return nil
 	}
 	mode := srcInfo.Mode()
-	dstInfo, err := hfs.Stat(dst)
+	dstInfo, err := efs.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -580,28 +580,28 @@ func (hfs *Fs) Merge(src, dst string) error {
 	}
 	if srcInfo.IsDir() {
 		if dstInfo == nil {
-			err := hfs.Mkdir(dst, mode)
+			err := efs.Mkdir(dst, mode)
 			if err != nil && !os.IsExist(err) {
 				return err
 			}
 		}
-		if err := hfs.mergeDir(src, dst); err != nil {
+		if err := efs.mergeDir(src, dst); err != nil {
 			return err
 		}
-		return hfs.Remove(src)
+		return efs.Remove(src)
 	} else {
-		return hfs.renameFile(src, dst, mode, true)
+		return efs.renameFile(src, dst, mode, true)
 	}
 }
 
-func (hfs *Fs) Rename(src, dst string) error {
+func (efs *Fs) Rename(src, dst string) error {
 	src = cleanPath(src)
 	dst = cleanPath(dst)
 	srcUnderDst, dstUnderSrc := underCleanPath(src, dst)
 	if !srcUnderDst && dstUnderSrc {
 		return pathError(src, "rename", syscall.EINVAL)
 	}
-	srcInfo, err := hfs.Stat(src)
+	srcInfo, err := efs.Stat(src)
 	if err != nil {
 		return err
 	}
@@ -613,7 +613,7 @@ func (hfs *Fs) Rename(src, dst string) error {
 	// fail if the destination file already exists. Since not
 	// all file system supports such manner. However this is
 	// okay since it is mainly used as remote file system.
-	_, err = hfs.Stat(dst)
+	_, err = efs.Stat(dst)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -623,14 +623,14 @@ func (hfs *Fs) Rename(src, dst string) error {
 	if srcInfo.IsDir() {
 		// XXX: please notice the difference here, we must
 		// ensure we are the one to create the directory.
-		if err := hfs.Mkdir(dst, mode); err != nil {
+		if err := efs.Mkdir(dst, mode); err != nil {
 			return err
 		}
-		if err := hfs.mergeDir(src, dst); err != nil {
+		if err := efs.mergeDir(src, dst); err != nil {
 			return err
 		}
-		return hfs.Remove(src)
+		return efs.Remove(src)
 	} else {
-		return hfs.renameFile(src, dst, mode, false)
+		return efs.renameFile(src, dst, mode, false)
 	}
 }

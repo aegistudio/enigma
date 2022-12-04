@@ -1,4 +1,4 @@
-package hologram
+package enigma
 
 import (
 	"crypto/aes"

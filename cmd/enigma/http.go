@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/aegistudio/hologram"
+	"github.com/aegistudio/enigma"
 )
 
 var (
@@ -21,10 +21,10 @@ var (
 
 var cmdHTTP = &cobra.Command{
 	Use:   "http",
-	Short: "serve hologram file system via HTTP server",
+	Short: "serve enigma file system via HTTP server",
 	RunE: serpent.Executor(shaft.Module(
 		shaft.Invoke(func(
-			rootCtx serpent.CommandContext, hfs *hologram.Fs,
+			rootCtx serpent.CommandContext, hfs *enigma.Fs,
 		) error {
 			listener, err := net.Listen(
 				httpListenNetwork, httpListenAddr)

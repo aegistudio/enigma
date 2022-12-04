@@ -1,4 +1,4 @@
-module github.com/aegistudio/hologram
+module github.com/aegistudio/enigma
 
 go 1.17
 
