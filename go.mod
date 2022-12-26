@@ -3,6 +3,7 @@ module github.com/aegistudio/enigma
 go 1.17
 
 require (
+	github.com/aegistudio/go-winfsp v0.0.0-20221226142734-f1391875edcb
 	github.com/aegistudio/shaft v0.0.0-20221023182702-de3982a0a277
 	github.com/fclairamb/ftpserverlib v0.20.0
 	github.com/hashicorp/golang-lru v0.6.0
@@ -21,7 +22,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
+	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
