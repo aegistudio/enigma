@@ -14,11 +14,11 @@ secrets.
   * [ ] Vault (with [github.com/hashicorp/vault](https://github.com/hashicorp/vault))
   * [ ] HTTP request (remote decryption)
 * Integration
+  * [x] WinFSP (**Windows** only, with [github.com/aegistudio/go-winfsp](https://github.com/aegistudio/go-winfsp))
+  * [x] FUSE (**Linux** and **Mac** only, with [github.com/hanwen/go-fuse](https://github.com/hanwen/go-fuse))
   * [x] HTTP (trivially by Golang's `http` library)
   * [x] FTP (with [github.com/fclairamb/ftpserverlib](https://github.com/fclairamb/ftpserverlib))
   * [ ] NFSv3
-  * [x] WinFSP (**Windows** only, with [github.com/aegistudio/go-winfsp](https://github.com/aegistudio/go-winfsp))
-  * [ ] FUSE
 
 ## Methods of Encryption
 
