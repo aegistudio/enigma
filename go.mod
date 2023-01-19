@@ -3,8 +3,8 @@ module github.com/aegistudio/enigma
 go 1.17
 
 require (
-	github.com/aegistudio/go-winfsp v0.0.0-20221226142734-f1391875edcb
-	github.com/aegistudio/shaft v0.0.0-20221023182702-de3982a0a277
+	github.com/aegistudio/go-winfsp v1.0.0
+	github.com/aegistudio/shaft v1.0.0
 	github.com/fclairamb/ftpserverlib v0.20.0
 	github.com/hashicorp/golang-lru v0.6.0
 	github.com/pkg/errors v0.9.1

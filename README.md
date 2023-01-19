@@ -17,7 +17,7 @@ secrets.
   * [x] HTTP (trivially by Golang's `http` library)
   * [x] FTP (with [github.com/fclairamb/ftpserverlib](https://github.com/fclairamb/ftpserverlib))
   * [ ] NFSv3
-  * [ ] WinFSP
+  * [x] WinFSP (**Windows** only, with [github.com/aegistudio/go-winfsp](https://github.com/aegistudio/go-winfsp))
   * [ ] FUSE
 
 ## Methods of Encryption
