@@ -96,8 +96,6 @@ func fuseConvertFileMode(mode os.FileMode) uint32 {
 func fuseFillStat(fileInfo os.FileInfo) fuse.Attr {
 	var result fuse.Attr
 	result.Mode = fuseConvertFileMode(fileInfo.Mode())
-	result.Ino = 0
-	result.Rdev = 0
 	result.Size = uint64(fileInfo.Size())
 	modTime := fileInfo.ModTime()
 	if result.Atime == 0 && result.Atimensec == 0 {
@@ -138,6 +136,7 @@ func (n *fuseFileNode) Lookup(
 	}, fs.StableAttr{
 		Mode: out.Attr.Mode,
 		Gen:  1,
+		Ino:  out.Attr.Ino,
 	}), 0
 }
 
@@ -420,6 +419,7 @@ func (n *fuseFileNode) Create(
 	inode := n.NewInode(ctx, inner, fs.StableAttr{
 		Mode: out.Attr.Mode,
 		Gen:  1,
+		Ino:  out.Attr.Ino,
 	})
 	f = nil
 	return inode, result, fuse.FOPEN_DIRECT_IO, 0
