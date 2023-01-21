@@ -12,6 +12,8 @@ const (
 )
 
 func fuseFillWithStat(result *fuse.Attr, s *syscall.Stat_t) {
+	devMask := uint64(s.Dev)<<32 | uint64(s.Dev)>>32
+	result.Ino = devMask ^ s.Ino
 	result.Atime = uint64(s.Atimespec.Sec)
 	result.Atimensec = uint32(s.Atimespec.Nsec)
 	result.Mtime = uint64(s.Mtimespec.Sec)
