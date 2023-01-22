@@ -40,6 +40,10 @@ secrets.
 
 ## Methods of Encryption
 
+***(WARN: the method of encryption is undergoing restatement and
+reassessment. The author is working on it so that the project will
+have security audit as soon as possible.)***
+
 Both the file names and data will be encrypted by an [AES-256](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 key in [CTR mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#CTR),
 which takes trillions of years for the attackers to crack, owing to
