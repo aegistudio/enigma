@@ -8,9 +8,9 @@ Enigma is a simple encrypted filesystem that adds a thin layer of
 encryption over native filesystem and keeps your most sensitive
 secrets.
 
-[Quickstart for Windows (with WinFSP)](https://github.com/aegistudio/enigma/blob/doc-init/doc/quickstart.md#quickstart-for-windows-with-winfsp)
+[Quickstart for Windows (with WinFSP)](doc/quickstart.md#quickstart-for-windows-with-winfsp)
 
-[Quickstart for Linux (with FUSE)](https://github.com/aegistudio/enigma/blob/doc-init/doc/quickstart.md#quickstart-for-linux-with-fuse)
+[Quickstart for Linux (with FUSE)](doc/quickstart.md#quickstart-for-linux-with-fuse)
 
 <p align="center">
 <img src="https://github.com/aegistudio/enigma-assets/blob/693f0bd237cc73108e45dacb40eaf142a0255a75/winfsp.gif" width="71%" height="71%"/>
