@@ -1,8 +1,26 @@
 # Enigma: a simple encrypted filesystem
 
+![build](https://github.com/aegistudio/enigma/actions/workflows/build.yml/badge.svg)
+![release](https://img.shields.io/github/release/aegistudio/enigma)
+![update](https://img.shields.io/github/release-date/aegistudio/enigma.svg?color=blue&label=update)
+
 Enigma is a simple encrypted filesystem that adds a thin layer of
 encryption over native filesystem and keeps your most sensitive
 secrets.
+
+[Quickstart for Windows (with WinFSP)](https://github.com/aegistudio/enigma/blob/doc-init/doc/quickstart.md#quickstart-for-windows-with-winfsp)
+
+[Quickstart for Linux (with FUSE)](https://github.com/aegistudio/enigma/blob/doc-init/doc/quickstart.md#quickstart-for-linux-with-fuse)
+
+<p align="center">
+<img src="https://github.com/aegistudio/enigma-assets/blob/693f0bd237cc73108e45dacb40eaf142a0255a75/winfsp.gif" width="71%" height="71%"/>
+<br/><i>Use Enigma as a Windows local drive through WinFSP</i>
+</p>
+
+<p align="center">
+<img src="https://github.com/aegistudio/enigma-assets/blob/03198af9acc329642c3a084e05838e4cd4c7ea35/fuse.gif" width="71%" height="71%"/>
+<br/><i>Use Enigma as a mount point through FUSE on Linux</i>
+</p>
 
 ## Roadmap
 
