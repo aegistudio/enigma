@@ -1,5 +1,10 @@
 # Enigma: a simple encrypted filesystem
 
+***(WARN: This project has not been validated or verified for
+security. In fact, current implementation is prone to chosen
+ciphertext attack. It is strongly not recommended to use this
+in production.)***
+
 ![build](https://github.com/aegistudio/enigma/actions/workflows/build.yml/badge.svg)
 ![release](https://img.shields.io/github/release/aegistudio/enigma)
 ![update](https://img.shields.io/github/release-date/aegistudio/enigma.svg?color=blue&label=update)
@@ -39,10 +44,6 @@ secrets.
   * [ ] NFSv3
 
 ## Methods of Encryption
-
-***(WARN: the method of encryption is undergoing restatement and
-reassessment. The author is working on it so that the project will
-have security audit as soon as possible.)***
 
 Both the file names and data will be encrypted by an [AES-256](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 key in [CTR mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#CTR),
